@@ -26,30 +26,28 @@ The following requirements are needed by this module:
 
 - <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.5.0)
 
-- <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (>= 1.9.0, < 2.0)
+- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (~> 3.71)
 
-- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (>= 3.71.0, < 4.0)
-
-- <a name="requirement_random"></a> [random](#requirement\_random) (>= 3.5.0, < 4.0)
+- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.5)
 
 ## Providers
 
 The following providers are used by this module:
 
-- <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) (>= 3.71.0, < 4.0)
+- <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) (~> 3.71)
 
-- <a name="provider_random"></a> [random](#provider\_random) (>= 3.5.0, < 4.0)
+- <a name="provider_random"></a> [random](#provider\_random) (~> 3.5)
 
 ## Resources
 
 The following resources are used by this module:
 
-- [azurerm_management_lock.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/management_lock) (resource)
-- [azurerm_private_endpoint.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint) (resource)
-- [azurerm_private_endpoint_application_security_group_association.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint_application_security_group_association) (resource)
-- [azurerm_resource_group.TODO](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) (resource)
+- [azurerm_application_insights.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/application_insights) (resource)
+- [azurerm_log_analytics_workspace.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/log_analytics_workspace) (resource)
+- [azurerm_mssql_database.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/mssql_database) (resource)
+- [azurerm_mssql_server.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/mssql_server) (resource)
 - [azurerm_resource_group_template_deployment.telemetry](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group_template_deployment) (resource)
-- [azurerm_role_assignment.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) (resource)
+- [azurerm_service_plan.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/service_plan) (resource)
 - [random_id.telem](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) (resource)
 - [azurerm_resource_group.parent](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/resource_group) (data source)
 
@@ -57,12 +55,6 @@ The following resources are used by this module:
 ## Required Inputs
 
 The following input variables are required:
-
-### <a name="input_name"></a> [name](#input\_name)
-
-Description: The name of the this resource.
-
-Type: `string`
 
 ### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
 
@@ -73,6 +65,27 @@ Type: `string`
 ## Optional Inputs
 
 The following input variables are optional (have default values):
+
+### <a name="input_application_insights"></a> [application\_insights](#input\_application\_insights)
+
+Description:   One or more application insights instances to create. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.  
+  Reference an existing workspace by `workspace_resource_id` or reference a new workspace to be created `workspace_object_name`.
+
+Type:
+
+```hcl
+map(object({
+    name                = string
+    resource_group_name = optional(string, null)
+    location            = optional(string, null)
+    # retention_in_days   = optional(number, 30)
+    workspace_resource_id = optional(string, null)
+    workspace_object_name = optional(string, null)
+    tags                  = optional(map(any), {})
+  }))
+```
+
+Default: `{}`
 
 ### <a name="input_customer_managed_key"></a> [customer\_managed\_key](#input\_customer\_managed\_key)
 
@@ -87,6 +100,24 @@ object({
     key_version                        = optional(string, null)
     user_assigned_identity_resource_id = optional(string, null)
   })
+```
+
+Default: `{}`
+
+### <a name="input_databases"></a> [databases](#input\_databases)
+
+Description:   Microft SQL Database instances to create. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.  
+  Use `server_resource_id` to reference an existing server or `server_object_name` to reference a new server to be created.
+
+Type:
+
+```hcl
+map(object({
+    name               = string
+    server_resource_id = optional(string, null)
+    server_object_name = optional(string, null)
+    tags               = optional(map(any), {})
+  }))
 ```
 
 Default: `{}`
@@ -135,6 +166,24 @@ Type: `bool`
 
 Default: `true`
 
+### <a name="input_key_vaults"></a> [key\_vaults](#input\_key\_vaults)
+
+Description:
+
+Type:
+
+```hcl
+map(object({
+    name                = string
+    resource_group_name = optional(string, null)
+    location            = optional(string, null)
+    tenant_id           = string
+    tags                = optional(map(any), {})
+  }))
+```
+
+Default: `{}`
+
 ### <a name="input_location"></a> [location](#input\_location)
 
 Description: Azure region where the resource should be deployed.  If null, the location will be inferred from the resource group location.
@@ -158,24 +207,52 @@ object({
 
 Default: `{}`
 
-### <a name="input_managed_identities"></a> [managed\_identities](#input\_managed\_identities)
+### <a name="input_log_analytics_workspaces"></a> [log\_analytics\_workspaces](#input\_log\_analytics\_workspaces)
 
-Description: Managed identities to be created for the resource.
+Description:
+# tflint-ignore: terraform\_unused\_declarations  
+variable "managed\_identities" {  
+  type = object({  
+    system\_assigned            = optional(bool, false)  
+    user\_assigned\_resource\_ids = optional(set(string), [])
+  })  
+  default     = {}  
+  description = "Managed identities to be created for the resource."
+}
 
-Type:
-
-```hcl
-object({
-    system_assigned            = optional(bool, false)
-    user_assigned_resource_ids = optional(set(string), [])
-  })
-```
-
-Default: `{}`
-
-### <a name="input_private_endpoints"></a> [private\_endpoints](#input\_private\_endpoints)
-
-Description: A map of private endpoints to create on this resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
+variable "private\_endpoints" {  
+  type = map(object({  
+    name = optional(string, null)  
+    role\_assignments = optional(map(object({  
+      role\_definition\_id\_or\_name             = string  
+      principal\_id                           = string  
+      description                            = optional(string, null)  
+      skip\_service\_principal\_aad\_check       = optional(bool, false)  
+      condition                              = optional(string, null)  
+      condition\_version                      = optional(string, null)  
+      delegated\_managed\_identity\_resource\_id = optional(string, null)
+    })), {})  
+    lock = optional(object({  
+      name = optional(string, null)  
+      kind = optional(string, "None")
+    }), {})  
+    tags                                    = optional(map(any), null)  
+    subnet\_resource\_id                      = string  
+    private\_dns\_zone\_group\_name             = optional(string, "default")  
+    private\_dns\_zone\_resource\_ids           = optional(set(string), [])  
+    application\_security\_group\_associations = optional(map(string), {})  
+    private\_service\_connection\_name         = optional(string, null)  
+    network\_interface\_name                  = optional(string, null)  
+    location                                = optional(string, null)  
+    resource\_group\_name                     = optional(string, null)  
+    ip\_configurations = optional(map(object({  
+      name               = string  
+      private\_ip\_address = string
+    })), {})
+  }))  
+  default     = {}  
+  description = <<DESCRIPTION  
+A map of private endpoints to create on this resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
 
 - `name` - (Optional) The name of the private endpoint. One will be generated if not set.
 - `role_assignments` - (Optional) A map of role assignments to create on the private endpoint. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time. See `var.role_assignments` for more information.
@@ -197,33 +274,12 @@ Type:
 
 ```hcl
 map(object({
-    name = optional(string, null)
-    role_assignments = optional(map(object({
-      role_definition_id_or_name             = string
-      principal_id                           = string
-      description                            = optional(string, null)
-      skip_service_principal_aad_check       = optional(bool, false)
-      condition                              = optional(string, null)
-      condition_version                      = optional(string, null)
-      delegated_managed_identity_resource_id = optional(string, null)
-    })), {})
-    lock = optional(object({
-      name = optional(string, null)
-      kind = optional(string, "None")
-    }), {})
-    tags                                    = optional(map(any), null)
-    subnet_resource_id                      = string
-    private_dns_zone_group_name             = optional(string, "default")
-    private_dns_zone_resource_ids           = optional(set(string), [])
-    application_security_group_associations = optional(map(string), {})
-    private_service_connection_name         = optional(string, null)
-    network_interface_name                  = optional(string, null)
-    location                                = optional(string, null)
-    resource_group_name                     = optional(string, null)
-    ip_configurations = optional(map(object({
-      name               = string
-      private_ip_address = string
-    })), {})
+    name                = string
+    resource_group_name = optional(string, null)
+    location            = optional(string, null)
+    retention_in_days   = optional(number, 30)
+    sku                 = optional(string, "PerGB2018")
+    tags                = optional(map(any), {})
   }))
 ```
 
@@ -258,6 +314,76 @@ map(object({
 
 Default: `{}`
 
+### <a name="input_servers"></a> [servers](#input\_servers)
+
+Description:   Microft SQL Database Server instances to create. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
+
+Type:
+
+```hcl
+map(object({
+    name                         = string
+    resource_group_name          = optional(string, null)
+    location                     = optional(string, null)
+    version                      = optional(string, "12.0")
+    administrator_login          = optional(string, "DBAdmin")
+    administrator_login_password = optional(string, "P@55word1234")
+    tags                         = optional(map(any), {})
+  }))
+```
+
+Default: `{}`
+
+### <a name="input_service_plans"></a> [service\_plans](#input\_service\_plans)
+
+Description:
+
+Type:
+
+```hcl
+map(object({
+    name                = string
+    resource_group_name = optional(string, null)
+    location            = optional(string, null)
+    os_type             = optional(string, "Windows")
+    sku_name            = optional(string, "S1")
+    tags                = optional(map(string), {})
+  }))
+```
+
+Default: `{}`
+
+### <a name="input_storage_accounts"></a> [storage\_accounts](#input\_storage\_accounts)
+
+Description:
+
+Type:
+
+```hcl
+map(object({
+    name                     = string
+    resource_group_name      = optional(string, null)
+    location                 = optional(string, null)
+    account_tier             = optional(string, "Standard")
+    account_replication_type = optional(string, "LRS")
+    # enable_blob_encryption         = optional(bool, false)
+    # enable_file_encryption         = optional(bool, false)
+    # enable_hns                     = optional(bool, false)
+    # enable_https_traffic_only       = optional(bool, false)
+    # enable_large_file_share         = optional(bool, false)
+    # enable_queue_encryption         = optional(bool, false)
+    # enable_table_encryption         = optional(bool, false)
+    # enable_versioning              = optional(bool, false)
+    # network_rules = optional(object({
+    #   bypass         = optional(set(string), ["AzureServices"])
+    #   default_action = optional(string, "Allow")
+    # }), {})
+    tags = optional(map(any), {})
+  }))
+```
+
+Default: `{}`
+
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
 Description: The map of tags to be applied to the resource
@@ -266,21 +392,53 @@ Type: `map(any)`
 
 Default: `{}`
 
+### <a name="input_web_apps"></a> [web\_apps](#input\_web\_apps)
+
+Description:
+
+Type:
+
+```hcl
+map(object({
+    name                     = string
+    resource_group_name      = optional(string, null)
+    location                 = optional(string, null)
+    service_plan_resource_id = optional(string, null)
+    service_plan_object_name = optional(string, null)
+    app_insights_object_name = optional(string, null)
+    app_settings             = optional(map(string), {})
+    os_type                  = optional(string, null)
+    tags                     = optional(map(string), {})
+  }))
+```
+
+Default: `{}`
+
 ## Outputs
 
-The following outputs are exported:
-
-### <a name="output_private_endpoints"></a> [private\_endpoints](#output\_private\_endpoints)
-
-Description: A map of private endpoints. The map key is the supplied input to var.private\_endpoints. The map value is the entire azurerm\_private\_endpoint resource.
-
-### <a name="output_resource"></a> [resource](#output\_resource)
-
-Description: This is the full output for the resource.
+No outputs.
 
 ## Modules
 
-No modules.
+The following Modules are called:
+
+### <a name="module_avm_res_storage_storageaccount"></a> [avm\_res\_storage\_storageaccount](#module\_avm\_res\_storage\_storageaccount)
+
+Source: Azure/avm-res-storage-storageaccount/azurerm
+
+Version: 0.1.1
+
+### <a name="module_avm_res_web_site"></a> [avm\_res\_web\_site](#module\_avm\_res\_web\_site)
+
+Source: Azure/avm-res-web-site/azurerm
+
+Version: 0.2.0
+
+### <a name="module_keyvault"></a> [keyvault](#module\_keyvault)
+
+Source: Azure/avm-res-keyvault-vault/azurerm
+
+Version: 0.5.3
 
 <!-- markdownlint-disable-next-line MD041 -->
 ## Data Collection
