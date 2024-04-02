@@ -1,19 +1,26 @@
-variable "name" {
-  type        = string
-  description = "The name of the this resource."
-
-  validation {
-    condition     = can(regex("TODO", var.name))
-    error_message = "The name must be TODO." # TODO remove the example below once complete:
-    #condition     = can(regex("^[a-z0-9]{5,50}$", var.name))
-    #error_message = "The name must be between 5 and 50 characters long and can only contain lowercase letters and numbers."
-  }
-}
-
 # This is required for most resource modules
 variable "resource_group_name" {
   type        = string
   description = "The resource group where the resources will be deployed."
+}
+
+variable "application_insights" {
+  type = map(object({
+    name                = string
+    resource_group_name = optional(string, null)
+    location            = optional(string, null)
+    # retention_in_days   = optional(number, 30)
+    workspace_resource_id = optional(string, null)
+    workspace_object_name = optional(string, null)
+    tags                  = optional(map(any), {})
+  }))
+  default = {
+
+  }
+  description = <<DESCRIPTION
+  One or more application insights instances to create. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
+  Reference an existing workspace by `workspace_resource_id` or reference a new workspace to be created `workspace_object_name`.
+  DESCRIPTION
 }
 
 # required AVM interfaces
@@ -28,6 +35,21 @@ variable "customer_managed_key" {
   })
   default     = {}
   description = "Customer managed keys that should be associated with the resource."
+}
+
+variable "databases" {
+  type = map(object({
+    name               = string
+    server_resource_id = optional(string, null)
+    server_object_name = optional(string, null)
+    tags               = optional(map(any), {})
+  }))
+  default     = {}
+  description = <<DESCRIPTION
+  Microft SQL Database instances to create. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
+  Use `server_resource_id` to reference an existing server or `server_object_name` to reference a new server to be created.
+
+  DESCRIPTION
 }
 
 variable "diagnostic_settings" {
@@ -85,6 +107,20 @@ If it is set to false, then no telemetry will be collected.
 DESCRIPTION
 }
 
+variable "key_vaults" {
+  type = map(object({
+    name                = string
+    resource_group_name = optional(string, null)
+    location            = optional(string, null)
+    tenant_id           = string
+    tags                = optional(map(any), {})
+  }))
+  default     = {}
+  description = <<DESCRIPTION
+
+  DESCRIPTION
+}
+
 variable "location" {
   type        = string
   default     = null
@@ -105,6 +141,18 @@ variable "lock" {
     error_message = "The lock level must be one of: 'None', 'CanNotDelete', or 'ReadOnly'."
   }
 }
+
+variable "log_analytics_workspaces" {
+  type = map(object({
+    name                = string
+    resource_group_name = optional(string, null)
+    location            = optional(string, null)
+    retention_in_days   = optional(number, 30)
+    sku                 = optional(string, "PerGB2018")
+    tags                = optional(map(any), {})
+  }))
+  default     = {}
+  description = <<DESCRIPTION
 
 # tflint-ignore: terraform_unused_declarations
 variable "managed_identities" {
@@ -193,9 +241,94 @@ A map of role assignments to create on this resource. The map key is deliberatel
 DESCRIPTION
 }
 
+variable "servers" {
+  type = map(object({
+    name                         = string
+    resource_group_name          = optional(string, null)
+    location                     = optional(string, null)
+    version                      = optional(string, "12.0")
+    administrator_login          = optional(string, "DBAdmin")
+    administrator_login_password = optional(string, "P@55word1234")
+    tags                         = optional(map(any), {})
+  }))
+  default = {
+
+  }
+  description = <<DESCRIPTION
+  Microft SQL Database Server instances to create. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
+
+  DESCRIPTION
+}
+
+variable "service_plans" {
+  type = map(object({
+    name                = string
+    resource_group_name = optional(string, null)
+    location            = optional(string, null)
+    os_type             = optional(string, "Windows")
+    sku_name            = optional(string, "S1")
+    tags                = optional(map(string), {})
+  }))
+  default = {
+
+  }
+  description = <<DESCRIPTION
+
+  DESCRIPTION
+}
+
+variable "storage_accounts" {
+  type = map(object({
+    name                     = string
+    resource_group_name      = optional(string, null)
+    location                 = optional(string, null)
+    account_tier             = optional(string, "Standard")
+    account_replication_type = optional(string, "LRS")
+    # enable_blob_encryption         = optional(bool, false)
+    # enable_file_encryption         = optional(bool, false)
+    # enable_hns                     = optional(bool, false)
+    # enable_https_traffic_only       = optional(bool, false)
+    # enable_large_file_share         = optional(bool, false)
+    # enable_queue_encryption         = optional(bool, false)
+    # enable_table_encryption         = optional(bool, false)
+    # enable_versioning              = optional(bool, false)
+    # network_rules = optional(object({
+    #   bypass         = optional(set(string), ["AzureServices"])
+    #   default_action = optional(string, "Allow")
+    # }), {})
+    tags = optional(map(any), {})
+  }))
+  default = {
+
+  }
+  description = <<DESCRIPTION
+
+  DESCRIPTION
+}
+
 # tflint-ignore: terraform_unused_declarations
 variable "tags" {
   type        = map(any)
   default     = {}
   description = "The map of tags to be applied to the resource"
+}
+
+variable "web_apps" {
+  type = map(object({
+    name                     = string
+    resource_group_name      = optional(string, null)
+    location                 = optional(string, null)
+    service_plan_resource_id = optional(string, null)
+    service_plan_object_name = optional(string, null)
+    app_insights_object_name = optional(string, null)
+    app_settings             = optional(map(string), {})
+    os_type                  = optional(string, null)
+    tags                     = optional(map(string), {})
+  }))
+  default = {
+
+  }
+  description = <<DESCRIPTION
+
+  DESCRIPTION
 }
